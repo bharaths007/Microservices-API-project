@@ -1,7 +1,8 @@
 package com.synechron.User.service;
 
 import com.synechron.User.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.synechron.User.kafka.UserEventProducer;
+import com.synechron.User.model.kafka.FlowType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -10,11 +11,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class UserService {
 
-    @Autowired
-    RestTemplate restTemplate;
+    private final UserEventProducer userEventProducer;
 
-    @Autowired
-    WebClient webClient;
+    public UserService(UserEventProducer userEventProducer) {
+        this.userEventProducer = userEventProducer;
+    }
 
     @Bean
     public RestTemplate restTemplate() {
@@ -26,12 +27,8 @@ public class UserService {
         return  WebClient.create();
     }
 
-    public String invokeMailService(User user) {
-        String responseFromMail = restTemplate.postForObject("http://localhost:8082/send",user,String.class);
-        //String r = String.valueOf(webClient.post());
-
-        return responseFromMail;
-
+    public void publishToKafka(User user, FlowType flowType) {
+        userEventProducer.publish(user, flowType);
     }
 
 
